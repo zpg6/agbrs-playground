@@ -1,0 +1,2 @@
+# Rustfmt configuration for longer lines
+max_width = 120
