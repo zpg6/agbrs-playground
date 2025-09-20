@@ -5,9 +5,13 @@ Examples of Game Boy Advance game development with Rust using [agbrs](https://ag
 ## Examples
 
 - `hello_world` - Text rendering
+  - <img src="./docs/hello_world.gif" width=200 />
 - `simple_sprite` - Basic sprite display
+  - <img src="./docs/simple_sprite.gif" width=200 />
 - `color_test` - Color Wheel with slices of a few RGB colors
+  - <img src="./docs/color_test.gif" width=200 />
 - `color_spin` - Spin the Color Wheel continuously
+  - <img src="./docs/color_spin.gif" width=200 />
 
 ## Quick Start
 
