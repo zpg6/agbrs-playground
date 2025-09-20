@@ -6,7 +6,7 @@
 
 extern crate alloc;
 
-use agbrs_playground::color;
+use agbrs_playground::{color, rgb15};
 
 #[agb::entry]
 fn main(mut gba: agb::Gba) -> ! {
@@ -18,13 +18,13 @@ fn main(mut gba: agb::Gba) -> ! {
         agb::display::tiled::TileFormat::FourBpp,
     );
 
-    // Smiley face palette: 0=black, 1=yellow, 2=black, 3=red, 4=white
+    // Star palette: 0=transparent/background, 1=dark blue, 2=bright yellow, 3=white
     let palette_data = agb::display::Palette16::new([
+        rgb15!(0x001122), // Dark blue background
+        rgb15!(0x000033), // Darker blue
+        rgb15!(0xFFDD00), // Bright yellow for star
+        rgb15!(0xFFFF88), // Light yellow highlight
         color!(black),
-        color!(yellow),
-        color!(black),
-        color!(red),
-        color!(white),
         color!(black),
         color!(black),
         color!(black),
@@ -40,39 +40,30 @@ fn main(mut gba: agb::Gba) -> ! {
 
     agb::display::tiled::VRAM_MANAGER.set_background_palettes(&[palette_data]);
 
-    // Smiley face pattern (8x8 pixels)
-    let smiley_pattern = [
-        [0, 0, 1, 1, 1, 1, 0, 0], // Top of head
-        [0, 1, 1, 1, 1, 1, 1, 0], // Upper head
-        [1, 1, 1, 1, 1, 1, 1, 1], // Middle head
-        [1, 1, 4, 0, 0, 4, 1, 1], // Eyes
-        [1, 1, 1, 1, 1, 1, 1, 1], // Middle head
-        [1, 1, 3, 0, 0, 3, 1, 1], // Mouth
-        [0, 1, 1, 1, 1, 1, 1, 0], // Lower head
-        [0, 0, 1, 1, 1, 1, 0, 0], // Bottom of head
+    // Classic 5-pointed star pattern (8x8 pixels)
+    let star_pattern = [
+        [0, 0, 0, 0, 0, 0, 0, 0], // Empty top
+        [0, 0, 0, 3, 0, 0, 0, 0], // Top point
+        [0, 0, 0, 3, 2, 0, 0, 0], // Upper body
+        [2, 2, 2, 3, 2, 2, 2, 2], // Wide horizontal (left & right points)
+        [0, 2, 2, 2, 2, 2, 2, 0], // Inner body
+        [0, 0, 2, 2, 2, 2, 0, 0], // Lower body
+        [0, 0, 2, 0, 0, 2, 0, 0], // Bottom points start
+        [0, 2, 0, 0, 0, 0, 2, 0], // Bottom points
     ];
 
     let mut tile = agb::display::tiled::DynamicTile16::new();
     for y in 0..8 {
         for x in 0..8 {
-            tile.set_pixel(x, y, smiley_pattern[y][x]);
+            tile.set_pixel(x, y, star_pattern[y][x]);
         }
     }
 
-    // Place smiley faces in a cross pattern
-    let center_x = 12;
-    let center_y = 8;
+    // Place single star in center of screen
+    let center_x = 15;
+    let center_y = 10;
 
-    for dy in -2..3 {
-        for dx in -2..3 {
-            let x = center_x + dx;
-            let y = center_y + dy;
-
-            if (dx == 0) || (dy == 0) {
-                bg.set_tile_dynamic16((x, y), &tile, agb::display::tiled::TileEffect::default());
-            }
-        }
-    }
+    bg.set_tile_dynamic16((center_x, center_y), &tile, agb::display::tiled::TileEffect::default());
 
     loop {
         let mut frame = gfx.frame();
