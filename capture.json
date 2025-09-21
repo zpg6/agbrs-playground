@@ -16,11 +16,11 @@
   "binaries": {
     "moving_square": {
       "before_capture": "wait:1000",
-      "during_capture": "R:200,wait:300,D:200,wait:300,L:200,wait:300,U:200,wait:300,R:200"
+      "during_capture": "R:100,wait:200,R:100,wait:200,D:100,wait:200,D:100,wait:200,L:100,wait:200,L:100,wait:200,U:100,wait:200,U:100"
     },
     "moving_square_hold": {
       "before_capture": "wait:1000",
-      "during_capture": "R:500,wait:200,D:500,wait:200,L:500,wait:200,U:500"
+      "during_capture": "R:500,wait:200,D:100,L:500,wait:200,U:500,wait:200,D:100,L:300"
     }
   }
 }
