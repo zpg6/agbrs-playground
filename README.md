@@ -4,6 +4,8 @@ Examples of Game Boy Advance game development with Rust using [agbrs](https://ag
 
 ## Examples
 
+### Blocking agb Examples
+
 - `hello_world` - Text rendering
   - <img src="./docs/hello_world.gif" width=200 />
 - `simple_sprite` - Basic sprite display
@@ -13,14 +15,28 @@ Examples of Game Boy Advance game development with Rust using [agbrs](https://ag
 - `color_spin` - Spin the Color Wheel continuously
   - <img src="./docs/color_spin.gif" width=200 />
 
+### Async Examples (embassy-agb)
+
+- `moving_square` - Async sprite movement with button press detection
+  - <img src="./docs/moving_square.gif" width=200 />
+- `moving_square_hold` - Async sprite movement with button holding support
+  - <img src="./docs/moving_square_hold.gif" width=200 />
+
+> [!NOTE]
+> These async examples accompany [agb PR #1089](https://github.com/agbrs/agb/pull/1089) which adds async support to agb. I brought in Embassy as the async executor and implemented async for inputs, display, and time drivers.
+
 ## Quick Start
 
 ```sh
 # Install prerequisites
 cargo install agb-gbafix
 
-# Run an example (requires mgba-qt in PATH)
+# Run a blocking example (requires mgba-qt in PATH)
 cargo run --bin hello_world
+
+# Run an async example (requires mgba-qt in PATH)
+cargo run --bin moving_square
+cargo run --bin moving_square_hold
 
 # Build for real hardware
 cargo build --release --bin hello_world
