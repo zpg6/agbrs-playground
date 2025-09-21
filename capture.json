@@ -1,0 +1,26 @@
+{
+  "settings": {
+    "key_mappings": {
+      "a": "x",
+      "b": "z",
+      "select": "backspace",
+      "start": "enter",
+      "right": "right",
+      "left": "left",
+      "up": "up",
+      "down": "down",
+      "r_shoulder": "s",
+      "l_shoulder": "a"
+    }
+  },
+  "binaries": {
+    "moving_square": {
+      "before_capture": "wait:1000",
+      "during_capture": "R:200,wait:300,D:200,wait:300,L:200,wait:300,U:200,wait:300,R:200"
+    },
+    "moving_square_hold": {
+      "before_capture": "wait:1000",
+      "during_capture": "R:500,wait:200,D:500,wait:200,L:500,wait:200,U:500"
+    }
+  }
+}
