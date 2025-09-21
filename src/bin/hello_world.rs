@@ -161,18 +161,62 @@ fn main(mut gba: agb::Gba) -> ! {
     let center_x = 16;
     let center_y = 12;
     let text_start_x = center_x - 10; // 21 tiles / 2 = 10.5, rounded down
-    
-    bg.set_tile_dynamic16((text_start_x, center_y), &h_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 2, center_y), &e_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 4, center_y), &l1_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 6, center_y), &l2_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 8, center_y), &o_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 10, center_y), &space_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 12, center_y), &w_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 14, center_y), &o2_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 16, center_y), &r_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 18, center_y), &l3_tile, agb::display::tiled::TileEffect::default());
-    bg.set_tile_dynamic16((text_start_x + 20, center_y), &d_tile, agb::display::tiled::TileEffect::default());
+
+    bg.set_tile_dynamic16(
+        (text_start_x, center_y),
+        &h_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 2, center_y),
+        &e_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 4, center_y),
+        &l1_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 6, center_y),
+        &l2_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 8, center_y),
+        &o_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 10, center_y),
+        &space_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 12, center_y),
+        &w_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 14, center_y),
+        &o2_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 16, center_y),
+        &r_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 18, center_y),
+        &l3_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
+    bg.set_tile_dynamic16(
+        (text_start_x + 20, center_y),
+        &d_tile,
+        agb::display::tiled::TileEffect::default(),
+    );
 
     loop {
         let mut frame = gfx.frame();
