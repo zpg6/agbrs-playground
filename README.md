@@ -48,6 +48,7 @@ agb-gbafix target/thumbv4t-none-eabi/release/hello_world -o hello_world.gba
 - [agb documentation](https://docs.rs/agb/latest/agb/)
 - [agbrs book](https://agbrs.dev/book/)
 - [mGBA emulator](https://mgba.io)
+- ⭐️ [zpg6/agbrs-capture](https://github.com/zpg6/agbrs-capture) - For capturing GIFs of projects and examples
 
 ## License
 
