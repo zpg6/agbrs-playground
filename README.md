@@ -14,11 +14,11 @@ Examples of Game Boy Advance game development with Rust using [agbrs](https://ag
   - <img src="./docs/color_test.gif" width=200 />
 - `color_spin` - Spin the Color Wheel continuously
   - <img src="./docs/color_spin.gif" width=200 />
+- `simple_sprite` - Basic sprite display using aseprite
+  - <img src="./docs/simple_sprite.gif" width=200 />
 
 ### Async Examples (embassy-agb)
 
-- `simple_sprite` - Basic sprite display using aseprite
-  - <img src="./docs/simple_sprite.gif" width=200 />
 - `moving_square` - Async sprite movement with button press detection
   - <img src="./docs/moving_square.gif" width=200 />
 - `moving_square_hold` - Async sprite movement with button holding support
