@@ -1,3 +1,14 @@
+//! Simple animated sprite example
+//!
+//! Demonstrates basic sprite rendering with animation and physics:
+//! - Loading sprites from Aseprite files using `include_aseprite!`
+//! - Animated sprite rendering with frame timing
+//! - Basic physics with bouncing movement
+//! - VBlank-synchronized rendering for smooth display
+//!
+//! Features a bouncing animated crab that moves around the screen,
+//! reversing direction when hitting screen edges.
+
 #![no_std]
 #![no_main]
 #![cfg_attr(test, feature(custom_test_frameworks))]
@@ -6,68 +17,70 @@
 
 extern crate alloc;
 
-use agbrs_playground::{color, rgb15};
+use agb::{display::object::Object, include_aseprite};
+
+// Import the crab sprites from the Aseprite file
+include_aseprite!(mod sprites, "gfx/crab.aseprite");
 
 #[agb::entry]
 fn main(mut gba: agb::Gba) -> ! {
     let mut gfx = gba.graphics.get();
 
-    let mut bg = agb::display::tiled::RegularBackground::new(
-        agb::display::Priority::P0,
-        agb::display::tiled::RegularBackgroundSize::Background32x32,
-        agb::display::tiled::TileFormat::FourBpp,
-    );
+    // Sprite physics state
+    let mut crab_x = 50;
+    let mut crab_y = 50;
+    let mut x_velocity = 1; // pixels per move
+    let mut y_velocity = 1;
 
-    // Star palette: 0=transparent/background, 1=dark blue, 2=bright yellow, 3=white
-    let palette_data = agb::display::Palette16::new([
-        rgb15!(0x001122), // Dark blue background
-        rgb15!(0x000033), // Darker blue
-        rgb15!(0xFFDD00), // Bright yellow for star
-        rgb15!(0xFFFF88), // Light yellow highlight
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-        color!(black),
-    ]);
-
-    agb::display::tiled::VRAM_MANAGER.set_background_palettes(&[palette_data]);
-
-    // Classic 5-pointed star pattern (8x8 pixels)
-    let star_pattern = [
-        [0, 0, 0, 0, 0, 0, 0, 0], // Empty top
-        [0, 0, 0, 3, 0, 0, 0, 0], // Top point
-        [0, 0, 0, 3, 2, 0, 0, 0], // Upper body
-        [2, 2, 2, 3, 2, 2, 2, 2], // Wide horizontal (left & right points)
-        [0, 2, 2, 2, 2, 2, 2, 0], // Inner body
-        [0, 0, 2, 2, 2, 2, 0, 0], // Lower body
-        [0, 0, 2, 0, 0, 2, 0, 0], // Bottom points start
-        [0, 2, 0, 0, 0, 0, 2, 0], // Bottom points
-    ];
-
-    let mut tile = agb::display::tiled::DynamicTile16::new();
-    for y in 0..8 {
-        for x in 0..8 {
-            tile.set_pixel(x, y, star_pattern[y][x]);
-        }
-    }
-
-    // Place single star in center of screen
-    let center_x = 15;
-    let center_y = 10;
-
-    bg.set_tile_dynamic16((center_x, center_y), &tile, agb::display::tiled::TileEffect::default());
+    // Animation timing
+    let mut frame_count = 0u32;
+    const MOVE_EVERY_N_FRAMES: u32 = 60;
+    const ANIMATION_FRAME_RATE: u32 = 120;
 
     loop {
+        // Update position based on frame count
+        if frame_count % MOVE_EVERY_N_FRAMES == 0 {
+            // Calculate new position
+            let new_x = crab_x + x_velocity;
+            let new_y = crab_y + y_velocity;
+
+            // Crab sprite is 32x32 pixels
+            const SPRITE_SIZE: i32 = 32;
+
+            // Boundary collision and bouncing
+            if new_x <= 0 {
+                x_velocity = -x_velocity;
+                crab_x = 0;
+            } else if new_x >= agb::display::WIDTH - SPRITE_SIZE {
+                x_velocity = -x_velocity;
+                crab_x = agb::display::WIDTH - SPRITE_SIZE;
+            } else {
+                crab_x = new_x;
+            }
+
+            if new_y <= 0 {
+                y_velocity = -y_velocity;
+                crab_y = 0;
+            } else if new_y >= agb::display::HEIGHT - SPRITE_SIZE {
+                y_velocity = -y_velocity;
+                crab_y = agb::display::HEIGHT - SPRITE_SIZE;
+            } else {
+                crab_y = new_y;
+            }
+        }
+
+        // Calculate current animation frame based on frame count
+        let animation_frame = (frame_count / ANIMATION_FRAME_RATE) as usize;
+
+        // Create sprite object with current animation frame and position
+        let mut crab = Object::new(sprites::IDLE.animation_sprite(animation_frame));
+        crab.set_pos((crab_x, crab_y));
+
+        // Wait for VBlank and render the frame
         let mut frame = gfx.frame();
-        bg.show(&mut frame);
+        crab.show(&mut frame);
         frame.commit();
+
+        frame_count = frame_count.wrapping_add(1);
     }
 }
