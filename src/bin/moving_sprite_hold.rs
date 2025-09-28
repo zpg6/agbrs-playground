@@ -30,7 +30,7 @@ use embassy_agb::{
 };
 
 // Import the crab sprites from the Aseprite file
-include_aseprite!(mod sprites, "gfx/crab.aseprite");
+include_aseprite!(mod sprites, "gfx/ship.aseprite");
 
 // Shared button state between input task and main loop
 #[derive(Clone, Copy, Default)]
@@ -150,6 +150,7 @@ async fn main(spawner: Spawner) -> ! {
         let animation_frame = (frame_count / ANIMATION_FRAME_RATE) as usize;
 
         // Create sprite object with current animation frame and position
+        // Try common animation tag names: IDLE, DEFAULT, or the first available tag
         let mut crab = Object::new(sprites::IDLE.animation_sprite(animation_frame));
         crab.set_pos((crab_x, crab_y));
 
