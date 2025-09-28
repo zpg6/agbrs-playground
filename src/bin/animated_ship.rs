@@ -1,4 +1,4 @@
-//! Animated sprite example with dynamic animation switching
+//! Animated ship example with rocket firing
 //!
 //! Demonstrates async display + async input working together:
 //! - VBlank-synchronized rendering for smooth 60Hz display
@@ -8,8 +8,11 @@
 //! - Supports holding multiple buttons for diagonal movement
 //! - Loading sprites from Aseprite files using `include_aseprite!`
 //! - Uses IDLE animation when stationary, FLAME animation when moving
+//! - Fire rockets with A button that travel upward until they reach the top
 //!
-//! Controls: D-pad moves the animated ship, clamped to screen edges
+//! Controls:
+//! - D-pad moves the animated ship, clamped to screen edges
+//! - A button fires rockets from the ship (hold A for rapid fire)
 //! - Hold buttons for continuous movement
 //! - Hold multiple buttons for diagonal movement
 //! - Ship shows FLAME animation when moving, IDLE when stationary
@@ -24,6 +27,7 @@
 extern crate alloc;
 
 use agb::{display::object::Object, include_aseprite};
+use alloc::vec::Vec;
 use embassy_agb::{
     agb::input::Button,
     input::{AsyncInput, InputConfig},
@@ -32,7 +36,10 @@ use embassy_agb::{
 };
 
 // Import the ship sprites from the Aseprite file
-include_aseprite!(mod sprites, "gfx/ship.aseprite");
+include_aseprite!(mod ship_sprites, "gfx/ship.aseprite");
+
+// Import the rocket sprites from the Aseprite file
+include_aseprite!(mod rocket_sprites, "gfx/rocket.aseprite");
 
 // Shared button state between input task and main loop
 #[derive(Clone, Copy, Default)]
@@ -41,6 +48,8 @@ struct ButtonState {
     down: bool,
     left: bool,
     right: bool,
+    a: bool,
+    a_just_pressed: bool,
 }
 
 impl ButtonState {
@@ -71,22 +80,55 @@ impl ButtonState {
     }
 }
 
+// Rocket structure to track individual rockets
+#[derive(Clone, Copy)]
+struct Rocket {
+    x: i32,
+    y: i32,
+    active: bool,
+}
+
+impl Rocket {
+    fn new(x: i32, y: i32) -> Self {
+        Self { x, y, active: true }
+    }
+
+    fn update(&mut self) {
+        if self.active {
+            self.y -= 8; // Move rocket upward faster
+            if self.y < -16 {
+                // Remove rocket when it goes off screen
+                self.active = false;
+            }
+        }
+    }
+}
+
 static BUTTON_STATE: Mutex<CriticalSectionRawMutex, ButtonState> = Mutex::new(ButtonState {
     up: false,
     down: false,
     left: false,
     right: false,
+    a: false,
+    a_just_pressed: false,
 });
 
 // Input task: continuously poll button state and update shared state
 #[embassy_executor::task]
 async fn input_task(mut input: AsyncInput) {
+    let mut prev_a_pressed = false;
+
     loop {
         // Poll current button state (non-blocking)
         let up_pressed = input.is_pressed(Button::UP);
         let down_pressed = input.is_pressed(Button::DOWN);
         let left_pressed = input.is_pressed(Button::LEFT);
         let right_pressed = input.is_pressed(Button::RIGHT);
+        let a_pressed = input.is_pressed(Button::A);
+
+        // Detect A button just pressed (edge detection)
+        let a_just_pressed = a_pressed && !prev_a_pressed;
+        prev_a_pressed = a_pressed;
 
         // Update shared state
         {
@@ -95,6 +137,8 @@ async fn input_task(mut input: AsyncInput) {
             state.down = down_pressed;
             state.left = left_pressed;
             state.right = right_pressed;
+            state.a = a_pressed;
+            state.a_just_pressed = a_just_pressed;
         }
 
         // Wait for any button press or release (non-blocking)
@@ -130,6 +174,12 @@ async fn main(spawner: Spawner) -> ! {
     const IDLE_ANIMATION_RATE: u32 = 15; // slower animation for idle
     const FLAME_ANIMATION_RATE: u32 = 8; // faster animation for flame
 
+    // Rocket management
+    let mut rockets: Vec<Rocket> = Vec::new();
+    const MAX_ROCKETS: usize = 12; // Increased limit for faster firing
+    let mut fire_cooldown = 0u32;
+    const FIRE_RATE: u32 = 4; // Fire every 4 frames when holding A (about 15 rockets per second at 60fps)
+
     // Spawn input task
     spawner.spawn(input_task(input).unwrap());
 
@@ -138,10 +188,14 @@ async fn main(spawner: Spawner) -> ! {
         display.wait_for_vblank().await;
 
         // Get current button state and calculate net movement
-        let (move_x, move_y, is_moving) = {
-            let state = BUTTON_STATE.lock().await;
+        let (move_x, move_y, is_moving, a_pressed, fire_rocket) = {
+            let mut state = BUTTON_STATE.lock().await;
             let movement = state.net_movement();
-            (movement.0, movement.1, state.is_moving())
+            let fire = state.a_just_pressed;
+            let a_held = state.a;
+            // Reset the just_pressed flag after reading it
+            state.a_just_pressed = false;
+            (movement.0, movement.1, state.is_moving(), a_held, fire)
         };
 
         // Apply movement if any buttons are pressed
@@ -155,13 +209,33 @@ async fn main(spawner: Spawner) -> ! {
             ship_y = ship_y.clamp(MIN_Y, MAX_Y);
         }
 
+        // Update fire cooldown
+        if fire_cooldown > 0 {
+            fire_cooldown -= 1;
+        }
+
+        // Fire rocket if A button was just pressed or if A is held and cooldown is ready
+        if (fire_rocket || (a_pressed && fire_cooldown == 0)) && rockets.len() < MAX_ROCKETS {
+            // Fire rocket from the center-top of the ship
+            let rocket_x = ship_x + SPRITE_SIZE / 2 - 4; // Center rocket on ship (rocket is 8x8)
+            let rocket_y = ship_y; // Start rocket at the top of the ship (no gap)
+            rockets.push(Rocket::new(rocket_x, rocket_y));
+            fire_cooldown = FIRE_RATE; // Set cooldown for next rocket
+        }
+
+        // Update all rockets
+        rockets.retain_mut(|rocket| {
+            rocket.update();
+            rocket.active
+        });
+
         // Choose animation based on movement state
         let (animation_tag, animation_rate) = if is_moving {
             // Use FLAME animation when moving (faster animation)
-            (&sprites::FLAME, FLAME_ANIMATION_RATE)
+            (&ship_sprites::FLAME, FLAME_ANIMATION_RATE)
         } else {
             // Use IDLE animation when stationary (slower animation)
-            (&sprites::IDLE, IDLE_ANIMATION_RATE)
+            (&ship_sprites::IDLE, IDLE_ANIMATION_RATE)
         };
 
         // Calculate current animation frame based on the chosen rate
@@ -171,9 +245,25 @@ async fn main(spawner: Spawner) -> ! {
         let mut ship = Object::new(animation_tag.animation_sprite(animation_frame));
         ship.set_pos((ship_x, ship_y));
 
+        // Create rocket objects
+        let mut rocket_objects: Vec<Object> = rockets
+            .iter()
+            .map(|rocket| {
+                let mut rocket_obj = Object::new(rocket_sprites::MOVING.animation_sprite(0));
+                rocket_obj.set_pos((rocket.x, rocket.y));
+                rocket_obj
+            })
+            .collect();
+
         // Render the frame
         let mut frame = display.frame().await;
         ship.show(&mut frame);
+
+        // Show all rockets
+        for rocket_obj in &mut rocket_objects {
+            rocket_obj.show(&mut frame);
+        }
+
         frame.commit();
 
         frame_count = frame_count.wrapping_add(1);

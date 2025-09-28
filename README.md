@@ -19,6 +19,8 @@ Examples of Game Boy Advance game development with Rust using [agbrs](https://ag
 
 ### Async Examples (embassy-agb)
 
+- `animated_ship` - Async animated ship (rockets) with movement with button holding support
+  - <img src="./docs/animated_ship.gif" width=200 />
 - `animated_sprite` - Async animated sprite (ship flames) with movement with button holding support
   - <img src="./docs/animated_sprite.gif" width=200 />
 - `moving_sprite_hold` - Async sprite movement with button holding support
