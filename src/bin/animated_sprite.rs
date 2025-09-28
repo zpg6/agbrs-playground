@@ -1,4 +1,4 @@
-//! Moving animated sprite example with button holding support
+//! Animated ship example with flame animation
 //!
 //! Demonstrates async display + async input working together:
 //! - VBlank-synchronized rendering for smooth 60Hz display
@@ -7,8 +7,9 @@
 //! - Animated sprite movement with position clamping
 //! - Supports holding multiple buttons for diagonal movement
 //! - Loading sprites from Aseprite files using `include_aseprite!`
+//! - Uses FLAME animation tag for animated thruster effects
 //!
-//! Controls: D-pad moves the animated ship, clamped to screen edges
+//! Controls: D-pad moves the animated ship with flame animation, clamped to screen edges
 //! - Hold buttons for continuous movement
 //! - Hold multiple buttons for diagonal movement
 //! Input polling: 60Hz (configurable from 30-120Hz)
@@ -120,7 +121,7 @@ async fn main(spawner: Spawner) -> ! {
 
     // Animation timing
     let mut frame_count = 0u32;
-    const ANIMATION_FRAME_RATE: u32 = 10; // change animation frame every 10 VBlanks
+    const ANIMATION_FRAME_RATE: u32 = 8; // change animation frame every 8 VBlanks (faster for flame effect)
 
     // Spawn input task
     spawner.spawn(input_task(input).unwrap());
@@ -150,8 +151,8 @@ async fn main(spawner: Spawner) -> ! {
         let animation_frame = (frame_count / ANIMATION_FRAME_RATE) as usize;
 
         // Create sprite object with current animation frame and position
-        // Try common animation tag names: IDLE, DEFAULT, or the first available tag
-        let mut ship = Object::new(sprites::IDLE.animation_sprite(animation_frame));
+        // Use FLAME animation tag for animated thruster effects
+        let mut ship = Object::new(sprites::FLAME.animation_sprite(animation_frame));
         ship.set_pos((ship_x, ship_y));
 
         // Render the frame
