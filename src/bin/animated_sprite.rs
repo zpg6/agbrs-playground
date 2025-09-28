@@ -1,4 +1,4 @@
-//! Animated ship example with flame animation
+//! Animated sprite example with dynamic animation switching
 //!
 //! Demonstrates async display + async input working together:
 //! - VBlank-synchronized rendering for smooth 60Hz display
@@ -7,11 +7,12 @@
 //! - Animated sprite movement with position clamping
 //! - Supports holding multiple buttons for diagonal movement
 //! - Loading sprites from Aseprite files using `include_aseprite!`
-//! - Uses FLAME animation tag for animated thruster effects
+//! - Uses IDLE animation when stationary, FLAME animation when moving
 //!
-//! Controls: D-pad moves the animated ship with flame animation, clamped to screen edges
+//! Controls: D-pad moves the animated ship, clamped to screen edges
 //! - Hold buttons for continuous movement
 //! - Hold multiple buttons for diagonal movement
+//! - Ship shows FLAME animation when moving, IDLE when stationary
 //! Input polling: 60Hz (configurable from 30-120Hz)
 
 #![no_std]
@@ -62,6 +63,11 @@ impl ButtonState {
         }
 
         (x, y)
+    }
+
+    /// Check if any movement button is pressed
+    fn is_moving(&self) -> bool {
+        self.up || self.down || self.left || self.right
     }
 }
 
@@ -121,7 +127,8 @@ async fn main(spawner: Spawner) -> ! {
 
     // Animation timing
     let mut frame_count = 0u32;
-    const ANIMATION_FRAME_RATE: u32 = 8; // change animation frame every 8 VBlanks (faster for flame effect)
+    const IDLE_ANIMATION_RATE: u32 = 15; // slower animation for idle
+    const FLAME_ANIMATION_RATE: u32 = 8; // faster animation for flame
 
     // Spawn input task
     spawner.spawn(input_task(input).unwrap());
@@ -131,9 +138,10 @@ async fn main(spawner: Spawner) -> ! {
         display.wait_for_vblank().await;
 
         // Get current button state and calculate net movement
-        let (move_x, move_y) = {
+        let (move_x, move_y, is_moving) = {
             let state = BUTTON_STATE.lock().await;
-            state.net_movement()
+            let movement = state.net_movement();
+            (movement.0, movement.1, state.is_moving())
         };
 
         // Apply movement if any buttons are pressed
@@ -147,12 +155,20 @@ async fn main(spawner: Spawner) -> ! {
             ship_y = ship_y.clamp(MIN_Y, MAX_Y);
         }
 
-        // Calculate current animation frame
-        let animation_frame = (frame_count / ANIMATION_FRAME_RATE) as usize;
+        // Choose animation based on movement state
+        let (animation_tag, animation_rate) = if is_moving {
+            // Use FLAME animation when moving (faster animation)
+            (&sprites::FLAME, FLAME_ANIMATION_RATE)
+        } else {
+            // Use IDLE animation when stationary (slower animation)
+            (&sprites::IDLE, IDLE_ANIMATION_RATE)
+        };
+
+        // Calculate current animation frame based on the chosen rate
+        let animation_frame = (frame_count / animation_rate) as usize;
 
         // Create sprite object with current animation frame and position
-        // Use FLAME animation tag for animated thruster effects
-        let mut ship = Object::new(sprites::FLAME.animation_sprite(animation_frame));
+        let mut ship = Object::new(animation_tag.animation_sprite(animation_frame));
         ship.set_pos((ship_x, ship_y));
 
         // Render the frame

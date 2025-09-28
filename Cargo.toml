@@ -9,6 +9,10 @@ embassy-agb = { git = "https://github.com/zpg6/agb", branch = "feat/async" }
 embassy-executor = { git = "https://github.com/embassy-rs/embassy", features = ["arch-spin", "executor-thread"] }
 portable-atomic = { version = "1.6.0", default-features = false, features = ["critical-section", "fallback"] }
 
+[[bin]]
+name = "animated_sprite"
+path = "src/bin/animated_sprite.rs"
+
 [profile.dev]
 opt-level = 3
 debug = true
